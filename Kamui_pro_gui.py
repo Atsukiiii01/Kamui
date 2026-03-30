@@ -2,8 +2,82 @@ import threading
 import subprocess
 import random
 import time
-
 import FreeSimpleGUI as F
+import threading
+import asyncio
+import logging
+from kamui_bridge import AsyncKamuiBridge
+from kamui_intel import run_pipeline
+
+
+# ---------------------------------------------------------
+# 1. The Async Background Engine
+# ---------------------------------------------------------
+# This spins up a dedicated thread to handle all the heavy 
+# async network and subprocess I/O without freezing your GUI.
+kamui_loop = asyncio.new_event_loop()
+
+def start_background_loop(loop: asyncio.AbstractEventLoop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+engine_thread = threading.Thread(target=start_background_loop, args=(kamui_loop,), daemon=True)
+engine_thread.start()
+
+# ---------------------------------------------------------
+# 2. Bridge Initialization
+# ---------------------------------------------------------
+bridge = AsyncKamuiBridge(
+    pipeline_func=run_pipeline,
+    api_key="", # Highly recommended to put your NVD API key here
+    min_score=7.0,
+    output_dir="kamui_output"
+)
+
+active_scan = None
+
+# ---------------------------------------------------------
+# 3. GUI Button Triggers
+# ---------------------------------------------------------
+def execute_scan(cmd_list):
+    """Call this when the user clicks 'INITIATE SCAN'"""
+    global active_scan
+
+    def safe_print(msg):
+        # NOTE: If using Tkinter, you must use root.after() to update text widgets safely.
+        # e.g., root.after(0, lambda: text_box.insert("end", msg + "\n"))
+        print(msg) 
+
+    def on_complete(results):
+        safe_print("\n[+] Intelligence Pipeline Complete.")
+        # Process and display your JSON results here
+
+    def on_error(err_msg):
+        safe_print(f"\n[!] FATAL: {err_msg}")
+
+    # We must submit the scan to the background async loop
+    def _dispatch_scan():
+        global active_scan
+        active_scan = bridge.run_scan(
+            cmd_list=cmd_list,
+            output_cb=safe_print,
+            complete_cb=on_complete,
+            error_cb=on_error
+        )
+
+    # Thread-safe submission
+    kamui_loop.call_soon_threadsafe(_dispatch_scan)
+
+
+def cancel_scan():
+    """Call this when the user clicks 'CANCEL'"""
+    global active_scan
+    if active_scan:
+        async def _cancel():
+            logger = logging.getLogger("kamui.ui")
+            await active_scan.cancel(logger)
+            
+        asyncio.run_coroutine_threadsafe(_cancel(), kamui_loop)
 
 F.theme('Black')
 
