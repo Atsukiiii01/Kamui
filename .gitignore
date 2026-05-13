@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+kamui_output.json
+*.xml
+dist/
+build/
+*.egg-info/
