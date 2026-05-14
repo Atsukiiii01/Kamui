@@ -57,3 +57,24 @@ def parse_nmap_xml(xml_file):
             results.append(host_data)
             
     return {"targets": results, "total_hosts_with_open_ports": len(results)}
+def parse_discovery_xml(xml_file):
+    """Parses a ping sweep XML to extract only alive IP addresses."""
+    try:
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+    except ET.ParseError:
+        raise ValueError("Failed to parse Discovery XML.")
+
+    alive_ips = []
+    for host in root.findall("host"):
+        status = host.find("status")
+        # Ensure the host is actually up
+        if status is not None and status.get("state") == "up":
+            addr_element = host.find("address[@addrtype='ipv4']")
+            if addr_element is None:
+                addr_element = host.find("address")
+                
+            if addr_element is not None:
+                alive_ips.append(addr_element.get("addr"))
+                
+    return alive_ips
