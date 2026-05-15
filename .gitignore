@@ -1,9 +1,18 @@
+# Python Artifacts
 __pycache__/
 *.py[cod]
 *$py.class
-.env
-kamui_output.json
-*.xml
+*.egg-info/
 dist/
 build/
-*.egg-info/
+
+# Kamui State & Intelligence (CRITICAL OPSEC)
+kamui_state.db
+*.db
+*.json
+*.xml
+
+# Environment
+.env
+.venv/
+venv/
