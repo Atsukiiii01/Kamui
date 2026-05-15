@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Kamui 👁️</h1>
+  <h1>Kamui </h1>
   <p><b>Asynchronous, State-Aware Reconnaissance Pipeline</b></p>
 </div>
 
