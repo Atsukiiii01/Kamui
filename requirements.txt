@@ -1,0 +1,3 @@
+# Kamui is engineered to run exclusively on the Python 3 Standard Library.
+# No external pip dependencies are required. 
+# Ensure Nmap is installed natively or run via the provided Docker container.
